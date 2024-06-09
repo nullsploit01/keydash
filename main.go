@@ -8,8 +8,27 @@ import (
 )
 
 type model struct {
-	height int
-	width  int
+	height    int
+	width     int
+	paragraph string
+	styles    *Styles
+}
+
+type Styles struct {
+	Container   lipgloss.Style
+	BorderColor lipgloss.Color
+}
+
+func DefaultStyles() *Styles {
+	s := new(Styles)
+	s.BorderColor = lipgloss.Color("36")
+	s.Container = lipgloss.NewStyle().BorderForeground(s.BorderColor).BorderStyle(lipgloss.NormalBorder()).Padding(1).Width(80)
+	return s
+}
+
+func New(paragraph string) *model {
+	styles := DefaultStyles()
+	return &model{paragraph: paragraph, styles: styles}
 }
 
 func (m model) Init() tea.Cmd {
@@ -42,11 +61,14 @@ func (m model) View() string {
 		m.height,
 		lipgloss.Center,
 		lipgloss.Center,
-		"sup",
+		m.styles.Container.Render(m.paragraph),
 	)
 }
 
 func main() {
+	para := "He couldn't move. His head throbbed and spun. He couldn't decide if it was the flu or the drinking last night. It was probably a combination of both."
+	m := New(para)
+
 	f, err := tea.LogToFile("debug.log", "debug")
 	if err != nil {
 		log.Fatalf("err: %v", err)
@@ -54,7 +76,7 @@ func main() {
 
 	defer f.Close()
 
-	p := tea.NewProgram(model{}, tea.WithAltScreen())
+	p := tea.NewProgram(m, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		log.Fatalf("err: %v", err)
 	}
